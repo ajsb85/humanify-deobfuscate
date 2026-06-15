@@ -124,16 +124,12 @@ set of reference sites $R(b)$, and a current name $\text{name}(b)\in\Sigma^*$.
 
 A **rename map** is a partial function keyed by offset,
 
-$$
-\rho:\ \mathbb{N}\ \rightharpoonup\ \Sigma^*,
-$$
+$$ \rho:\ \mathbb{N}\ \rightharpoonup\ \Sigma^*, $$
 
 where $\rho(\text{pos}(b))$ is the new name of $b$ (undefined ⇒ unchanged). Applying $\rho$
 produces $P'$. The soundness guarantee is **α-equivalence**:
 
-$$
-P'\ \equiv_\alpha\ P \quad\Longrightarrow\quad \llbracket P'\rrbracket=\llbracket P\rrbracket,
-$$
+$$ P'\ \equiv_\alpha\ P \quad\Longrightarrow\quad \llbracket P'\rrbracket=\llbracket P\rrbracket, $$
 
 i.e. the program is identical up to consistent renaming of bound identifiers, so its
 observable behavior is unchanged. This holds because each binding is renamed *together
@@ -146,18 +142,12 @@ conflates $R(b_1)\cup R(b_2)$, violating α-equivalence. We therefore key on **b
 identity** $b$ (its offset), never on the token.
 
 **Capture avoidance.** When applying $\rho(\text{pos}(b))=t$, if $t$ is already visible in
-$\sigma(b)$ the rename would capture. Define the freshening operator over the set of names
-visible in a scope, $\mathrm{vis}(\sigma)$:
+$\sigma(b)$ the rename would capture. Writing $p$ for the underscore prefix (`_`), define
+the freshening operator over the names visible in the scope, $\mathrm{vis}(\sigma)$:
 
-$$
-\nu_\sigma(t)=
-\begin{cases}
-t & \text{if } t\notin \mathrm{vis}(\sigma)\\[2pt]
-\nu_\sigma(\texttt{\_}\,t) & \text{otherwise}
-\end{cases}
-$$
+$$ \nu_\sigma(t)= \begin{cases} t & \text{if } t\notin \mathrm{vis}(\sigma)\\ \nu_\sigma(p\,t) & \text{otherwise} \end{cases} $$
 
-— prepend `_` until free. This makes the applied name unique in scope, preserving
+— i.e. prepend `_` until free. This makes the applied name unique in scope, preserving
 α-equivalence. (`apply_renames.mjs` realizes $\nu$ via Babel's `scope.generateUid`.)
 
 **Normalization.** Model output is arbitrary text; a normalizer maps it to a legal
@@ -171,23 +161,14 @@ digit or is a reserved word.
 **1 — Order largest-scope-first.** With scope span $|\sigma(b)|=e_\sigma-s_\sigma$ (bytes),
 bindings are processed under
 
-$$
-b_i \prec b_j \iff |\sigma(b_i)|>|\sigma(b_j)|\ \lor\ \big(|\sigma(b_i)|=|\sigma(b_j)|\ \wedge\ \text{pos}(b_i)<\text{pos}(b_j)\big).
-$$
+$$ b_i \prec b_j \iff |\sigma(b_i)|>|\sigma(b_j)|\ \lor\ \big(|\sigma(b_i)|=|\sigma(b_j)|\ \wedge\ \text{pos}(b_i)<\text{pos}(b_j)\big). $$
 
 Outer, longer-lived names are decided first and inform the inner ones.
 
 **2 — Context window.** Each binding is presented with a windowed slice of its scope,
 budgeted to $c$ characters (default $c=1500$) and centered on the identifier:
 
-$$
-w(b)=P[\ell:r],\qquad
-[\ell,r]=
-\begin{cases}
-[s_\sigma,e_\sigma] & \text{if } e_\sigma-s_\sigma\le c\\[2pt]
-\big[\text{pos}(b)-\tfrac{c}{2},\ \text{pos}(b)+\tfrac{c}{2}\big] & \text{otherwise}
-\end{cases}
-$$
+$$ w(b)=P[\ell:r],\qquad [\ell,r]= \begin{cases} [s_\sigma,e_\sigma] & \text{if } e_\sigma-s_\sigma\le c\\[2pt] \big[\text{pos}(b)-\tfrac{c}{2},\ \text{pos}(b)+\tfrac{c}{2}\big] & \text{otherwise} \end{cases} $$
 
 clamped to the scope and snapped to UTF‑8 boundaries.
 
@@ -201,17 +182,13 @@ linear, $O(|P|)$; the full pass is $O(|P|+\sum_b |R(b)|)$.
 A webpack/browserify bundle is one file whose module array exposes functions
 $m_0,\dots,m_{K-1}$ over byte ranges $[s_k,e_k)$ that **partition** the binding offsets:
 
-$$
-\forall\,k\ne k':\ [s_k,e_k)\cap[s_{k'},e_{k'})=\varnothing .
-$$
+$$ \forall\,k\ne k':\ [s_k,e_k)\cap[s_{k'},e_{k'})=\varnothing . $$
 
 Each module is named independently into a map $\rho_k$ with
 $\mathrm{dom}(\rho_k)\subseteq[s_k,e_k)$. Disjoint ranges + injective $\text{pos}$ make the
 merge a **disjoint union**, conflict-free in any order:
 
-$$
-\rho=\bigsqcup_{k=0}^{K-1}\rho_k,\qquad \mathrm{dom}(\rho_k)\cap\mathrm{dom}(\rho_{k'})=\varnothing\ (k\ne k').
-$$
+$$ \rho=\bigsqcup_{k=0}^{K-1}\rho_k,\qquad \mathrm{dom}(\rho_k)\cap\mathrm{dom}(\rho_{k'})=\varnothing\ (k\ne k'). $$
 
 This is exactly what makes the *one-agent-per-module* fan-out safe to run fully in
 parallel — see [`references/agent-prompt.md`](references/agent-prompt.md).
@@ -220,9 +197,7 @@ parallel — see [`references/agent-prompt.md`](references/agent-prompt.md).
 single letters via `__webpack_require__.d(exports, "a", () => X)`. Define the per-module
 export map
 
-$$
-E_k(\ell)=\text{name}(X)\quad\text{from } \texttt{r.d(exports, }\ell\texttt{, () => X)} .
-$$
+$$ E_k(\ell)=\text{name}(X)\quad\text{from } \texttt{r.d(exports, }\ell\texttt{, () => X)} . $$
 
 For any import binding $v=r(k)$, a member access $v.\ell$ provably denotes export $\ell$ of
 module $k$, so it is rewritten $v.\ell\mapsto v.E_k(\ell)$. These are *property* names, not
@@ -242,22 +217,16 @@ remaining after round $j$ (short ∧ meaningful, excluding the scaffolding set $
 compiler temporaries). Each round names a nonempty subset, giving a strictly decreasing
 chain bounded below by $F$:
 
-$$
-S_0\ \supsetneq\ S_1\ \supsetneq\ \cdots\ \supseteq\ F .
-$$
+$$ S_0\ \supsetneq\ S_1\ \supsetneq\ \cdots\ \supseteq\ F . $$
 
 Because $B$ is finite the chain stabilizes — $\exists J,\ \forall j\ge J:\ S_j=F$. In
 practice we stop at the first round whose gain falls below a threshold:
 
-$$
-|S_j|-|S_{j+1}|<\epsilon\qquad(\epsilon\approx 5).
-$$
+$$ |S_j|-|S_{j+1}|<\epsilon\qquad(\epsilon\approx 5). $$
 
 **Coverage.** With $\rho(\text{pos}(b))=\bot$ meaning "unnamed,"
 
-$$
-\text{coverage}=\frac{\big|\{\,b\in B:\rho(\text{pos}(b))\ne\bot\,\}\big|}{|B|}.
-$$
+$$ \text{coverage}=\frac{\big|\{\,b\in B:\rho(\text{pos}(b))\ne\bot\,\}\big|}{|B|}. $$
 
 On a real TypeScript-compiled bundle this saturates near $0.6\text{–}0.7$; the residual
 $\approx 1-\text{coverage}$ is $F$ (iterator-protocol scratch, `__extends`/`__values`
@@ -265,9 +234,7 @@ temporaries) and is intentionally left unnamed — naming it reduces readability
 
 **The whole pipeline** is the composition
 
-$$
-\text{readable}=\big(\,\text{ts}\circ\text{exp}\circ\text{apply}_\rho\,\big)(\text{bundle}),
-$$
+$$ \text{readable}=\big(\,\text{ts}\circ\text{exp}\circ\text{apply}_\rho\,\big)(\text{bundle}), $$
 
 with $\text{apply}_\rho$ the α-safe binding rename, $\text{exp}$ the export-id pass, and
 $\text{ts}$ the class-IIFE pass — exactly what `finish_bundle.mjs` runs in order.
