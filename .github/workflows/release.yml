@@ -12,8 +12,12 @@ jobs:
   package-and-publish:
     name: Package & publish skill
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need tags for git describe on manual runs
 
       - uses: actions/setup-node@v4
         with:
@@ -28,29 +32,34 @@ jobs:
       - name: Package the skill
         id: package
         run: |
-          VERSION="${GITHUB_REF_NAME:-dev}"
+          VERSION="${GITHUB_REF_NAME}"
+          case "$VERSION" in
+            v*) ;;                                    # tag push
+            *)  VERSION="$(git describe --tags --abbrev=0 2>/dev/null || echo dev)";;
+          esac
           STAGE="humanify-deobfuscate"
           mkdir -p "dist/$STAGE"
           cp -r SKILL.md references scripts "dist/$STAGE/"
           rm -rf "dist/$STAGE/scripts/node_modules"
-          cd dist
-          zip -r "humanify-deobfuscate-$VERSION.zip" "$STAGE" >/dev/null
+          ( cd dist && zip -r "humanify-deobfuscate-$VERSION.zip" "$STAGE" >/dev/null )
           # a .skill bundle is just a zip of the skill folder — convenient for manual install
-          cp "humanify-deobfuscate-$VERSION.zip" "humanify-deobfuscate-$VERSION.skill"
+          cp "dist/humanify-deobfuscate-$VERSION.zip" "dist/humanify-deobfuscate-$VERSION.skill"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          ls -la
+          ls -la dist
 
       - name: Attach artifacts to the GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          # only upload assets; never overwrite the human-written release description
-          files: |
-            dist/humanify-deobfuscate-${{ steps.package.outputs.version }}.zip
-            dist/humanify-deobfuscate-${{ steps.package.outputs.version }}.skill
+        run: |
+          TAG="${{ steps.package.outputs.version }}"
+          # reuse the release if it already exists (e.g. created with a custom description),
+          # otherwise create one with auto-generated notes — never clobber an existing body.
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
+          gh release upload "$TAG" \
+            "dist/humanify-deobfuscate-$TAG.zip" \
+            "dist/humanify-deobfuscate-$TAG.skill" --clobber
 
       - name: Publish to the skills marketplace (discovery-based)
         run: |
-          echo "::notice title=Marketplace::This skill is installable from the public repo."
+          echo "::notice title=Marketplace::Installable from the public repo."
           echo "Install:  npx skills add ${GITHUB_REPOSITORY} -g"
           echo "skills.sh indexes public GitHub repos tagged 'claude-skill' / 'agent-skill';"
-          echo "no registry push is required — making the repo public + a tagged release is the publish step."
+          echo "no registry push is required — a public repo + a tagged release IS the publish step."
