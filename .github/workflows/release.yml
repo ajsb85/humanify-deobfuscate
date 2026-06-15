@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package-and-publish:
+    name: Package & publish skill
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify skill installs & runs
+        working-directory: scripts
+        run: |
+          npm ci
+          node --check finish_bundle.mjs
+
+      - name: Package the skill
+        id: package
+        run: |
+          VERSION="${GITHUB_REF_NAME:-dev}"
+          STAGE="humanify-deobfuscate"
+          mkdir -p "dist/$STAGE"
+          cp -r SKILL.md references scripts "dist/$STAGE/"
+          rm -rf "dist/$STAGE/scripts/node_modules"
+          cd dist
+          zip -r "humanify-deobfuscate-$VERSION.zip" "$STAGE" >/dev/null
+          # a .skill bundle is just a zip of the skill folder — convenient for manual install
+          cp "humanify-deobfuscate-$VERSION.zip" "humanify-deobfuscate-$VERSION.skill"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          ls -la
+
+      - name: Attach artifacts to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/humanify-deobfuscate-${{ steps.package.outputs.version }}.zip
+            dist/humanify-deobfuscate-${{ steps.package.outputs.version }}.skill
+
+      - name: Publish to the skills marketplace (discovery-based)
+        run: |
+          echo "::notice title=Marketplace::This skill is installable from the public repo."
+          echo "Install:  npx skills add ${GITHUB_REPOSITORY} -g"
+          echo "skills.sh indexes public GitHub repos tagged 'claude-skill' / 'agent-skill';"
+          echo "no registry push is required — making the repo public + a tagged release is the publish step."
