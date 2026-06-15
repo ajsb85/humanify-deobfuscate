@@ -24,7 +24,7 @@ jobs:
           node-version: 20
 
       - name: Verify skill installs & runs
-        working-directory: scripts
+        working-directory: humanify-deobfuscate/scripts
         run: |
           npm ci
           node --check finish_bundle.mjs
@@ -38,8 +38,8 @@ jobs:
             *)  VERSION="$(git describe --tags --abbrev=0 2>/dev/null || echo dev)";;
           esac
           STAGE="humanify-deobfuscate"
-          mkdir -p "dist/$STAGE"
-          cp -r SKILL.md references scripts "dist/$STAGE/"
+          mkdir -p dist
+          cp -r "$STAGE" "dist/$STAGE"
           rm -rf "dist/$STAGE/scripts/node_modules"
           ( cd dist && zip -r "humanify-deobfuscate-$VERSION.zip" "$STAGE" >/dev/null )
           # a .skill bundle is just a zip of the skill folder — convenient for manual install
