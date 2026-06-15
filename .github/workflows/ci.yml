@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: validate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Babel deps
+        working-directory: scripts
+        run: npm ci
+
+      - name: Syntax-check all scripts
+        run: |
+          for f in scripts/*.mjs; do node --check "$f" && echo "ok: $f"; done
+
+      - name: Validate SKILL.md frontmatter
+        run: |
+          node -e '
+            const fs = require("fs");
+            const s = fs.readFileSync("SKILL.md", "utf8");
+            const m = s.match(/^---\n([\s\S]*?)\n---/);
+            if (!m) { console.error("SKILL.md: missing YAML frontmatter"); process.exit(1); }
+            const fm = m[1];
+            for (const key of ["name", "description"]) {
+              if (!new RegExp("(^|\\n)" + key + ":").test(fm)) {
+                console.error("SKILL.md frontmatter missing required key: " + key);
+                process.exit(1);
+              }
+            }
+            console.log("SKILL.md frontmatter OK");
+          '
+
+      - name: Smoke-test the rename pipeline (scope-safe + behavior-preserving)
+        run: |
+          node scripts/extract_identifiers.mjs fixtures/example.min.js > /tmp/ids.json
+          # build a rename map by original name (fixture names are unique)
+          node -e '
+            const fs = require("fs");
+            const ids = JSON.parse(fs.readFileSync("/tmp/ids.json", "utf8")).identifiers;
+            const table = { a:"chunkString", e:"str", t:"size", n:"chunks", r:"length", i:"index" };
+            const map = {};
+            for (const b of ids) if (table[b.name]) map[b.pos] = table[b.name];
+            fs.writeFileSync("/tmp/renames.json", JSON.stringify(map));
+          '
+          node scripts/apply_renames.mjs fixtures/example.min.js /tmp/renames.json /tmp/readable.js
+          node --check /tmp/readable.js
+          grep -q "function chunkString(str, size)" /tmp/readable.js || { echo "rename did not apply as expected"; cat /tmp/readable.js; exit 1; }
+          # behavior must be identical
+          node -e '
+            const fs = require("fs");
+            const orig = eval("(" + fs.readFileSync("fixtures/example.min.js","utf8") + ")");
+            const out  = eval("(" + fs.readFileSync("/tmp/readable.js","utf8") + ")");
+            for (const [s,k] of [["abcdefg",3],["hi",5],["",2]]) {
+              const a = JSON.stringify(orig(s,k)), b = JSON.stringify(out(s,k));
+              if (a !== b) { console.error("behavior mismatch", s, k, a, b); process.exit(1); }
+            }
+            console.log("behavior preserved ✓");
+          '
