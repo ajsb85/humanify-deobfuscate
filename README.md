@@ -89,6 +89,13 @@ and [`references/agent-prompt.md`](references/agent-prompt.md).
 
 ## Architecture
 
+<p align="center">
+  <img src="assets/pipeline-dark.svg" alt="humanify-deobfuscate pipeline — bundle.js → parse → split_bundle → naming → merge → finish_bundle → readable.js, with a convergence loop" width="780">
+</p>
+
+<details>
+<summary>Text version of the pipeline</summary>
+
 ```
  bundle.js ──▶ parse (Babel) ──▶ AST T + scope tree ──▶ bindings B  (keyed by byte offset)
                                                               │
@@ -111,6 +118,8 @@ and [`references/agent-prompt.md`](references/agent-prompt.md).
         ▼
  convergence loop   extract_remaining ▸ name ▸ apply      (repeat until gain < ε)
 ```
+
+</details>
 
 The design separates **correctness** (owned by deterministic AST scripts) from **naming
 judgment** (owned by the model). Everything below makes that split precise.

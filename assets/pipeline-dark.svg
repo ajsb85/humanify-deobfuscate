@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" role="img" aria-label="humanify-deobfuscate pipeline">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6e7681"/>
+    </marker>
+    <marker id="arrowLoop" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f778ba"/>
+    </marker>
+    <style>
+      .lbl  { fill:#e6edf3; font-size:15px; font-weight:600; }
+      .sub  { fill:#9aa4b2; font-size:11.5px; }
+      .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+      .out  { fill:#aee6bb; font-size:14px; font-weight:600; }
+      .osub { fill:#73bf86; font-size:11px; }
+      .edge { stroke:#6e7681; stroke-width:1.6; fill:none; }
+      text  { text-anchor:middle; }
+      .start{ text-anchor:start; }
+    </style>
+  </defs>
+
+  <!-- backdrop -->
+  <rect width="960" height="700" fill="#0d1117"/>
+  <rect x="6" y="6" width="948" height="688" rx="14" fill="none" stroke="#21262d" stroke-width="1.5"/>
+
+  <!-- title -->
+  <text x="40" y="40" class="lbl start" font-size="19">humanify-deobfuscate<tspan fill="#7d8590" font-weight="400" font-size="13">  ·  deobfuscation pipeline</tspan></text>
+
+  <!-- ===== vertical flow arrows (centre column x=250) ===== -->
+  <path class="edge" marker-end="url(#arrow)" d="M250,92 V116"/>
+  <path class="edge" marker-end="url(#arrow)" d="M250,174 V202"/>
+  <path class="edge" marker-end="url(#arrow)" d="M250,260 V288"/>
+  <path class="edge" marker-end="url(#arrow)" d="M250,346 V374"/>
+  <path class="edge" marker-end="url(#arrow)" d="M250,432 V460"/>
+  <path class="edge" marker-end="url(#arrow)" d="M250,546 V576"/>
+
+  <!-- ===== horizontal arrows to output pills (x 430 -> 560) ===== -->
+  <path class="edge" marker-end="url(#arrow)" d="M430,145 H560"/>
+  <path class="edge" marker-end="url(#arrow)" d="M430,231 H560"/>
+  <path class="edge" marker-end="url(#arrow)" d="M430,317 H560"/>
+  <path class="edge" marker-end="url(#arrow)" d="M430,403 H560"/>
+  <path class="edge" marker-end="url(#arrow)" d="M430,500 H560"/>
+
+  <!-- ===== convergence loop-back arrow ===== -->
+  <path d="M70,605 H38 V500 H64" fill="none" stroke="#f778ba" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrowLoop)"/>
+  <text x="29" y="552" transform="rotate(-90 29 552)" class="sub" fill="#f778ba" font-size="10.5">repeat until gain &lt; ε</text>
+
+  <!-- ===== input ===== -->
+  <rect x="160" y="58" width="180" height="34" rx="17" fill="#1c2128" stroke="#6e7681" stroke-width="1.4"/>
+  <text x="250" y="80" class="mono lbl" font-size="14" fill="#c9d1d9">bundle.js</text>
+
+  <!-- ===== PARSE ===== -->
+  <rect x="70" y="116" width="360" height="58" rx="10" fill="#161b22" stroke="#39d0d8" stroke-width="1.6"/>
+  <text x="250" y="141" class="lbl">parse<tspan class="sub" font-weight="400">  —  Babel</tspan></text>
+  <text x="250" y="160" class="sub">lex · parse · scope analysis</text>
+  <rect x="560" y="116" width="360" height="58" rx="10" fill="#0e1a12" stroke="#2ea043" stroke-width="1.5"/>
+  <text x="740" y="141" class="out mono">bindings B</text>
+  <text x="740" y="160" class="osub">keyed by byte offset · ordered largest-scope-first</text>
+
+  <!-- ===== SPLIT ===== -->
+  <rect x="70" y="202" width="360" height="58" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="250" y="227" class="lbl mono">split_bundle.mjs</text>
+  <text x="250" y="246" class="sub">list · dump · chunk</text>
+  <rect x="560" y="202" width="360" height="58" rx="10" fill="#0e1a12" stroke="#2ea043" stroke-width="1.5"/>
+  <text x="740" y="235" class="out mono">per-module  { src, bindings }</text>
+
+  <!-- ===== NAMING ===== -->
+  <rect x="70" y="288" width="360" height="58" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.6"/>
+  <text x="250" y="313" class="lbl">naming</text>
+  <text x="250" y="332" class="sub">you / parallel agents — one per module</text>
+  <rect x="560" y="288" width="360" height="58" rx="10" fill="#0e1a12" stroke="#2ea043" stroke-width="1.5"/>
+  <text x="740" y="313" class="out mono">mod_k.renames.json</text>
+  <text x="740" y="332" class="osub">a rename map ρ&#8342;</text>
+
+  <!-- ===== MERGE ===== -->
+  <rect x="70" y="374" width="360" height="58" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+  <text x="250" y="399" class="lbl mono">split_bundle.mjs<tspan class="sub" font-family="system-ui" font-weight="400"> · merge</tspan></text>
+  <text x="250" y="418" class="sub">ρ = ⊔&#8342; ρ&#8342;   (disjoint union — conflict-free)</text>
+  <rect x="560" y="374" width="360" height="58" rx="10" fill="#0e1a12" stroke="#2ea043" stroke-width="1.5"/>
+  <text x="740" y="407" class="out mono">renames_all.json</text>
+
+  <!-- ===== FINISH ===== -->
+  <rect x="70" y="460" width="360" height="86" rx="10" fill="#161b22" stroke="#f0883e" stroke-width="1.7"/>
+  <text x="250" y="485" class="lbl mono">finish_bundle.mjs</text>
+  <text x="250" y="508" class="mono" fill="#ffd5b0" font-size="12">apply_ρ ▸ rename_exports ▸ detect_ts_classes ▸ verify</text>
+  <text x="250" y="528" class="sub" font-size="11">α-safe binding · webpack export ids · TS class IIFEs · node --check</text>
+  <rect x="560" y="460" width="360" height="86" rx="10" fill="#0e1a12" stroke="#2ea043" stroke-width="1.5"/>
+  <text x="740" y="496" class="out mono">readable.js</text>
+  <text x="740" y="518" class="osub mono">+ readable.js.remaining.json</text>
+
+  <!-- ===== CONVERGENCE ===== -->
+  <rect x="70" y="576" width="360" height="58" rx="10" fill="#161b22" stroke="#f778ba" stroke-width="1.6"/>
+  <text x="250" y="601" class="lbl">convergence loop</text>
+  <text x="250" y="620" class="sub mono" font-size="11.5">extract_remaining ▸ name ▸ apply</text>
+
+  <!-- ===== legend ===== -->
+  <g font-size="11" >
+    <rect x="560" y="590" width="12" height="12" rx="3" fill="#58a6ff"/><text x="579" y="600" class="sub start">script</text>
+    <rect x="632" y="590" width="12" height="12" rx="3" fill="#bc8cff"/><text x="651" y="600" class="sub start">model / agents</text>
+    <rect x="744" y="590" width="12" height="12" rx="3" fill="#f0883e"/><text x="763" y="600" class="sub start">deterministic</text>
+    <rect x="560" y="614" width="12" height="12" rx="3" fill="#2ea043"/><text x="579" y="624" class="sub start">output</text>
+    <rect x="632" y="614" width="12" height="12" rx="3" fill="#f778ba"/><text x="651" y="624" class="sub start">loop</text>
+  </g>
+</svg>
