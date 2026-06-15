@@ -1,0 +1,19 @@
+# dependencies (installed via `npm install` in scripts/)
+node_modules/
+
+# deobfuscation work artifacts
+work/
+work2/
+*.remaining.json
+*.ts.json
+renames*.json
+cleanup*.json
+identifiers.json
+readable*.js
+
+# tbdflow local state
+.tbdflow-intent.json
+
+# os / editor
+.DS_Store
+*.log
