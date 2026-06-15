@@ -1,0 +1,5 @@
+# Normalize line endings to LF so scripts work on every platform (incl. checkout on Windows)
+* text=auto eol=lf
+*.png binary
+*.zip binary
+*.skill binary
